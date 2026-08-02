@@ -202,7 +202,7 @@ app.use(express.json());
       const { parseRepoUrl, fetchGitHubRepoDetails } = await import('./src/services/github');
       const { refactorCodeFile } = await import('./src/services/gemini');
 
-      const { owner, repo, defaultBranch } = parseRepoUrl(repo_url);
+      const { owner, repo } = parseRepoUrl(repo_url);
       console.log(`[API] Refactoring: ${owner}/${repo} - ${target_file}`);
 
       const headers: Record<string, string> = {
@@ -251,7 +251,7 @@ app.use(express.json());
       const mockRepoInfo = {
         owner,
         repo,
-        defaultBranch,
+        defaultBranch: 'main',
         description: 'Target Repository',
         stars: 0,
         forks: 0,
