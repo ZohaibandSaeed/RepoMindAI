@@ -1,7 +1,7 @@
 import express from 'express';
 import path from 'path';
 import dotenv from 'dotenv';
-import { createServer as createViteServer } from 'vite';
+
 import { parseRepoUrl, fetchGitHubRepoDetails } from './src/services/github';
 import { generateRepoGraphsWithAI, explainNodeWithAI } from './src/services/gemini';
 
@@ -301,11 +301,13 @@ app.use(express.json());
 
   // Vite Middleware in Development mode
   if (process.env.NODE_ENV !== 'production') {
-    createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    }).then((vite) => {
-      app.use(vite.middlewares);
+    import('vite').then(({ createServer: createViteServer }) => {
+      createViteServer({
+        server: { middlewareMode: true },
+        appType: 'spa',
+      }).then((vite) => {
+        app.use(vite.middlewares);
+      });
     });
   } else {
     const distPath = path.join(process.cwd(), 'dist');

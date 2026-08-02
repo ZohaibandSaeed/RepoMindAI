@@ -48,8 +48,11 @@ export default function App() {
       setAnalysisResult(response.data);
     } catch (err: any) {
       console.error('Analysis error:', err);
-      const msg = err.response?.data?.error || err.message || 'Failed to analyze repository.';
-      setError(msg);
+      let msg = err.response?.data?.error || err.message || 'Failed to analyze repository.';
+      if (typeof msg === 'object') {
+        msg = msg.message || JSON.stringify(msg);
+      }
+      setError(String(msg));
     } finally {
       setIsLoading(false);
     }
