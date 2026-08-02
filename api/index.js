@@ -4,6 +4,13 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -21,41 +28,13 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
-// api/index.ts
-var import_express = __toESM(require("express"));
-var import_dotenv = __toESM(require("dotenv"));
-
 // src/services/github.ts
-var import_axios = __toESM(require("axios"));
-var IGNORED_PATTERNS = [
-  /^\.git/,
-  /^node_modules/,
-  /^dist/,
-  /^build/,
-  /^\.next/,
-  /^\.nuxt/,
-  /^coverage/,
-  /^\.venv/,
-  /^venv/,
-  /^__pycache__/,
-  /package-lock\.json$/,
-  /pnpm-lock\.yaml$/,
-  /yarn\.lock$/,
-  /Cargo\.lock$/,
-  /poetry\.lock$/,
-  /\.DS_Store$/,
-  /\.png$/,
-  /\.jpg$/,
-  /\.jpeg$/,
-  /\.gif$/,
-  /\.ico$/,
-  /\.svg$/,
-  /\.woff/,
-  /\.ttf/,
-  /\.mp4$/,
-  /\.zip$/,
-  /\.pdf$/
-];
+var github_exports = {};
+__export(github_exports, {
+  fetchFileCommitCount: () => fetchFileCommitCount,
+  fetchGitHubRepoDetails: () => fetchGitHubRepoDetails,
+  parseRepoUrl: () => parseRepoUrl
+});
 function parseRepoUrl(urlInput) {
   let clean = urlInput.trim();
   clean = clean.replace(/^https?:\/\/github\.com\//i, "");
@@ -121,10 +100,83 @@ async function fetchGitHubRepoDetails(owner, repo, githubToken) {
     keyConfigFiles
   };
 }
+async function fetchFileCommitCount(owner, repo, path2, githubToken) {
+  const headers = {
+    Accept: "application/vnd.github.v3+json",
+    "User-Agent": "GitVisualizer-App"
+  };
+  const token = githubToken || process.env.GITHUB_TOKEN;
+  if (token && token !== "your_github_personal_access_token_here") {
+    headers.Authorization = `token ${token}`;
+  }
+  try {
+    let cleanPath = path2;
+    if (cleanPath.startsWith(`${repo}/`)) {
+      cleanPath = cleanPath.substring(repo.length + 1);
+    }
+    const encodedPath = cleanPath.split("/").map(encodeURIComponent).join("/");
+    const url = `https://api.github.com/repos/${owner}/${repo}/commits?path=${encodedPath}&per_page=1`;
+    const res = await import_axios.default.get(url, { headers });
+    const linkHeader = res.headers["link"];
+    if (linkHeader) {
+      const match = linkHeader.match(/&page=(\d+)>; rel="last"/);
+      if (match && match[1]) {
+        return parseInt(match[1], 10);
+      }
+    }
+    return res.data.length || 0;
+  } catch (error) {
+    console.error(`[GitHub API] Failed to fetch commit count for ${path2}`, error);
+    return 0;
+  }
+}
+var import_axios, IGNORED_PATTERNS;
+var init_github = __esm({
+  "src/services/github.ts"() {
+    import_axios = __toESM(require("axios"));
+    IGNORED_PATTERNS = [
+      /^\.git/,
+      /^node_modules/,
+      /^dist/,
+      /^build/,
+      /^\.next/,
+      /^\.nuxt/,
+      /^coverage/,
+      /^\.venv/,
+      /^venv/,
+      /^__pycache__/,
+      /package-lock\.json$/,
+      /pnpm-lock\.yaml$/,
+      /yarn\.lock$/,
+      /Cargo\.lock$/,
+      /poetry\.lock$/,
+      /\.DS_Store$/,
+      /\.png$/,
+      /\.jpg$/,
+      /\.jpeg$/,
+      /\.gif$/,
+      /\.ico$/,
+      /\.svg$/,
+      /\.woff/,
+      /\.ttf/,
+      /\.mp4$/,
+      /\.zip$/,
+      /\.pdf$/
+    ];
+  }
+});
 
 // src/services/gemini.ts
-var import_genai = require("@google/genai");
-var aiInstance = null;
+var gemini_exports = {};
+__export(gemini_exports, {
+  chatWithRepoContext: () => chatWithRepoContext,
+  explainNodeWithAI: () => explainNodeWithAI,
+  generateFallbackGraphs: () => generateFallbackGraphs,
+  generateRepoGraphsWithAI: () => generateRepoGraphsWithAI,
+  generateSecurityAudit: () => generateSecurityAudit,
+  generateTestCases: () => generateTestCases,
+  refactorCodeFile: () => refactorCodeFile
+});
 function getGeminiClient(geminiToken) {
   if (geminiToken) {
     return new import_genai.GoogleGenAI({
@@ -598,22 +650,73 @@ Format the output entirely in beautiful Markdown. Do NOT wrap the entire respons
 An error occurred while generating test cases: ${error.message}`;
   }
 }
+async function refactorCodeFile(repoInfo, targetFilePath, fileContent, geminiToken) {
+  const ai = getGeminiClient(geminiToken);
+  if (!ai) {
+    return "# Error\nAI Agent is offline. Cannot refactor code. Please configure GEMINI_API_KEY.";
+  }
+  try {
+    const prompt = `You are a Principal Software Engineer and Code Optimizer.
+Your task is to review a specific file from the following GitHub Repository and provide targeted refactoring suggestions:
+Repository: ${repoInfo.owner}/${repoInfo.repo}
+Target File: ${targetFilePath}
+File Content:
+\`\`\`
+${fileContent}
+\`\`\`
 
-// api/index.ts
+DO NOT output the full rewritten file. Only provide the specific parts that need improvement (e.g. code smells, performance issues, outdated patterns, security flaws).
+Format your response entirely in Markdown. 
+For each issue you find, create a section with:
+1. **Issue Description:** A brief explanation of the problem.
+2. **Old Code:** The exact lines or snippet that is problematic.
+3. **New Code:** The exact replacement code snippet.
+4. **Benefit:** A 1-sentence explanation of why this change is beneficial (e.g., better performance, cleaner code, modern syntax).
+
+If the file is already perfect and follows best practices, simply state that no refactoring is needed.`;
+    const response = await ai.models.generateContent({
+      model: "gemini-3.6-flash",
+      contents: prompt
+    });
+    return response.text || "# Error\nNo refactoring suggestions generated.";
+  } catch (error) {
+    console.error("[Gemini] Refactor generation failed:", error);
+    return `# Error generating refactor
+An error occurred: ${error.message}`;
+  }
+}
+var import_genai, aiInstance;
+var init_gemini = __esm({
+  "src/services/gemini.ts"() {
+    import_genai = require("@google/genai");
+    aiInstance = null;
+  }
+});
+
+// server.ts
+var import_express = __toESM(require("express"));
+var import_path = __toESM(require("path"));
+var import_dotenv = __toESM(require("dotenv"));
+init_github();
+init_gemini();
 import_dotenv.default.config();
 var app = (0, import_express.default)();
+var PORT = process.env.PORT || 3e3;
 app.use(import_express.default.json());
 app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", service: "GitVisualizer API" });
+  res.json({ status: "ok", service: "GitVisualizer API", timestamp: (/* @__PURE__ */ new Date()).toISOString() });
 });
 app.post("/api/analyze-repo", async (req, res) => {
   try {
     const { repo_url, github_token, gemini_token } = req.body;
-    if (!repo_url) return res.status(400).json({ error: "Repository URL is required." });
+    if (!repo_url) {
+      return res.status(400).json({ error: "Repository URL is required." });
+    }
     const { owner, repo } = parseRepoUrl(repo_url);
+    console.log(`[API] Analyzing repository: ${owner}/${repo}`);
     const repoDetails = await fetchGitHubRepoDetails(owner, repo, github_token);
     const graphs = await generateRepoGraphsWithAI(repoDetails, gemini_token);
-    res.json({
+    const result = {
       repoUrl: `https://github.com/${owner}/${repo}`,
       owner,
       repo,
@@ -625,47 +728,233 @@ app.post("/api/analyze-repo", async (req, res) => {
       highLevelGraph: graphs.highLevelGraph,
       fileGraph: graphs.fileGraph,
       analyzedAt: (/* @__PURE__ */ new Date()).toISOString()
-    });
+    };
+    res.json(result);
   } catch (error) {
-    res.status(500).json({ error: error.message || "Failed to analyze repository." });
+    console.error("[API Error /api/analyze-repo]:", error.message || error);
+    res.status(500).json({
+      error: error.message || "Failed to analyze repository. Please verify the URL and try again."
+    });
   }
 });
 app.post("/api/explain-node", async (req, res) => {
   try {
     const { repoName, nodeName, nodePath, nodeType, contextSummary, gemini_token } = req.body;
-    const explanation = await explainNodeWithAI(repoName, nodeName, nodePath, nodeType, contextSummary, gemini_token);
+    const explanation = await explainNodeWithAI(
+      repoName || "Repository",
+      nodeName || "Node",
+      nodePath || "path",
+      nodeType || "file",
+      contextSummary || "",
+      gemini_token
+    );
     res.json(explanation);
   } catch (error) {
+    console.error("[API Error /api/explain-node]:", error.message || error);
     res.status(500).json({ error: "Failed to generate node explanation." });
   }
 });
 app.post("/api/chat", async (req, res) => {
   try {
     const { repoName, repoData, chatHistory, message, gemini_token } = req.body;
-    const reply = await chatWithRepoContext(repoName, repoData, chatHistory, message, gemini_token);
+    const { chatWithRepoContext: chatWithRepoContext2 } = await Promise.resolve().then(() => (init_gemini(), gemini_exports));
+    const reply = await chatWithRepoContext2(
+      repoName || "Repository",
+      repoData || {},
+      chatHistory || [],
+      message || "",
+      gemini_token
+    );
     res.json({ reply });
   } catch (error) {
+    console.error("[API Error /api/chat]:", error.message || error);
     res.status(500).json({ error: "Failed to process chat message." });
   }
 });
 app.post("/api/security-audit", async (req, res) => {
   try {
     const { repo_url, github_token, gemini_token } = req.body;
-    const { owner, repo } = parseRepoUrl(repo_url);
-    const repoDetails = await fetchGitHubRepoDetails(owner, repo, github_token);
-    const result = await generateSecurityAudit(repoDetails, gemini_token);
-    res.json(result);
+    if (!repo_url) {
+      return res.status(400).json({ error: "Repository URL is required." });
+    }
+    const { parseRepoUrl: parseRepoUrl2, fetchGitHubRepoDetails: fetchGitHubRepoDetails2 } = await Promise.resolve().then(() => (init_github(), github_exports));
+    const { generateSecurityAudit: generateSecurityAudit2 } = await Promise.resolve().then(() => (init_gemini(), gemini_exports));
+    const { owner, repo } = parseRepoUrl2(repo_url);
+    console.log(`[API] Running Security Audit for: ${owner}/${repo}`);
+    const repoDetails = await fetchGitHubRepoDetails2(owner, repo, github_token);
+    const auditResult = await generateSecurityAudit2(repoDetails, gemini_token);
+    res.json(auditResult);
   } catch (error) {
-    res.status(500).json({ error: "Failed to run security audit." });
+    console.error("[API Error /api/security-audit]:", error.message || error);
+    res.status(500).json({ error: "Failed to generate security audit." });
   }
 });
 app.post("/api/generate-tests", async (req, res) => {
   try {
-    const { repo_url, file_path, file_content, github_token, gemini_token } = req.body;
-    const result = await generateTestCases(repo_url, file_path, file_content, gemini_token);
-    res.json(result);
+    const { repo_url, github_token, gemini_token, target_file } = req.body;
+    if (!repo_url || !target_file) {
+      return res.status(400).json({ error: "Repository URL and Target File are required." });
+    }
+    const { parseRepoUrl: parseRepoUrl2, fetchGitHubRepoDetails: fetchGitHubRepoDetails2 } = await Promise.resolve().then(() => (init_github(), github_exports));
+    const { generateTestCases: generateTestCases2 } = await Promise.resolve().then(() => (init_gemini(), gemini_exports));
+    const { owner, repo } = parseRepoUrl2(repo_url);
+    console.log(`[API] Generating Tests for: ${owner}/${repo} - ${target_file}`);
+    const repoDetails = await fetchGitHubRepoDetails2(owner, repo, github_token);
+    const headers = {
+      Accept: "application/vnd.github.v3.raw",
+      "User-Agent": "GitVisualizer-App"
+    };
+    if (github_token) {
+      headers.Authorization = `token ${github_token}`;
+    } else if (process.env.GITHUB_TOKEN && process.env.GITHUB_TOKEN !== "your_github_personal_access_token_here") {
+      headers.Authorization = `token ${process.env.GITHUB_TOKEN}`;
+    }
+    let fileContent = "";
+    try {
+      const { default: axios2 } = await import("axios");
+      const encodedPath = target_file.split("/").map(encodeURIComponent).join("/");
+      let fileUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${encodedPath}`;
+      try {
+        const fileRes = await axios2.get(fileUrl, { headers });
+        if (fileRes.data.content) {
+          fileContent = Buffer.from(fileRes.data.content, "base64").toString("utf8");
+        } else {
+          fileContent = fileRes.data;
+        }
+      } catch (initialErr) {
+        if (initialErr.response?.status === 404 && target_file.startsWith(`${repo}/`)) {
+          const strippedPath = target_file.replace(`${repo}/`, "");
+          const encodedStrippedPath = strippedPath.split("/").map(encodeURIComponent).join("/");
+          fileUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${encodedStrippedPath}`;
+          const retryRes = await axios2.get(fileUrl, { headers });
+          if (retryRes.data.content) {
+            fileContent = Buffer.from(retryRes.data.content, "base64").toString("utf8");
+          } else {
+            fileContent = retryRes.data;
+          }
+        } else {
+          throw initialErr;
+        }
+      }
+    } catch (err) {
+      console.error("[API] Failed to fetch target file for tests:", err.message);
+      return res.status(404).json({ error: "Failed to fetch the target file content from GitHub." });
+    }
+    const testsMarkdown = await generateTestCases2(repoDetails, target_file, fileContent, gemini_token);
+    res.json({ testsMarkdown });
   } catch (error) {
+    console.error("[API Error /api/generate-tests]:", error.message || error);
     res.status(500).json({ error: "Failed to generate test cases." });
   }
 });
+app.post("/api/refactor-file", async (req, res) => {
+  try {
+    const { repo_url, github_token, gemini_token, target_file } = req.body;
+    if (!repo_url || !target_file) {
+      return res.status(400).json({ error: "Repository URL and target file are required." });
+    }
+    const { parseRepoUrl: parseRepoUrl2, fetchGitHubRepoDetails: fetchGitHubRepoDetails2 } = await Promise.resolve().then(() => (init_github(), github_exports));
+    const { refactorCodeFile: refactorCodeFile2 } = await Promise.resolve().then(() => (init_gemini(), gemini_exports));
+    const { owner, repo } = parseRepoUrl2(repo_url);
+    console.log(`[API] Refactoring: ${owner}/${repo} - ${target_file}`);
+    const headers = {
+      Accept: "application/vnd.github.v3+json",
+      "User-Agent": "GitVisualizer-App"
+    };
+    const token = github_token || process.env.GITHUB_TOKEN;
+    if (token && token !== "your_github_personal_access_token_here") {
+      headers.Authorization = `token ${token}`;
+    }
+    let fileContent = "";
+    try {
+      const { default: axios2 } = await import("axios");
+      const encodedPath = target_file.split("/").map(encodeURIComponent).join("/");
+      let fileUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${encodedPath}`;
+      try {
+        const fileRes = await axios2.get(fileUrl, { headers });
+        if (fileRes.data.content) {
+          fileContent = Buffer.from(fileRes.data.content, "base64").toString("utf8");
+        } else {
+          fileContent = fileRes.data;
+        }
+      } catch (initialErr) {
+        if (initialErr.response?.status === 404 && target_file.startsWith(`${repo}/`)) {
+          const strippedPath = target_file.replace(`${repo}/`, "");
+          const encodedStrippedPath = strippedPath.split("/").map(encodeURIComponent).join("/");
+          fileUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${encodedStrippedPath}`;
+          const retryRes = await axios2.get(fileUrl, { headers });
+          if (retryRes.data.content) {
+            fileContent = Buffer.from(retryRes.data.content, "base64").toString("utf8");
+          } else {
+            fileContent = retryRes.data;
+          }
+        } else {
+          throw initialErr;
+        }
+      }
+    } catch (err) {
+      console.error("[API] Failed to fetch target file for refactoring:", err.message);
+      return res.status(404).json({ error: "Failed to fetch the target file content from GitHub." });
+    }
+    const mockRepoInfo = {
+      owner,
+      repo,
+      defaultBranch: "main",
+      description: "Target Repository",
+      stars: 0,
+      forks: 0,
+      primaryLanguage: "Unknown",
+      tree: [],
+      filteredFiles: [target_file],
+      keyConfigFiles: []
+    };
+    const refactorMarkdown = await refactorCodeFile2(mockRepoInfo, target_file, fileContent, gemini_token);
+    res.json({ refactorMarkdown });
+  } catch (error) {
+    console.error("[API Error /api/refactor-file]:", error.message || error);
+    res.status(500).json({ error: "Failed to generate refactoring suggestions." });
+  }
+});
+app.post("/api/heatmap", async (req, res) => {
+  try {
+    const { repo_url, github_token, nodes } = req.body;
+    if (!repo_url || !Array.isArray(nodes)) {
+      return res.status(400).json({ error: "Repository URL and nodes array are required." });
+    }
+    const { parseRepoUrl: parseRepoUrl2, fetchFileCommitCount: fetchFileCommitCount2 } = await Promise.resolve().then(() => (init_github(), github_exports));
+    const { owner, repo } = parseRepoUrl2(repo_url);
+    console.log(`[API] Fetching Heatmap data for: ${owner}/${repo} (${nodes.length} files)`);
+    const heatmapData = {};
+    const promises = nodes.map(async (path2) => {
+      const count = await fetchFileCommitCount2(owner, repo, path2, github_token);
+      heatmapData[path2] = count;
+    });
+    await Promise.all(promises);
+    res.json({ heatmapData });
+  } catch (error) {
+    console.error("[API Error /api/heatmap]:", error.message || error);
+    res.status(500).json({ error: "Failed to fetch heatmap data." });
+  }
+});
+if (process.env.NODE_ENV !== "production") {
+  import("vite").then(({ createServer: createViteServer }) => {
+    createViteServer({
+      server: { middlewareMode: true },
+      appType: "spa"
+    }).then((vite) => {
+      app.use(vite.middlewares);
+    });
+  });
+} else {
+  const distPath = import_path.default.join(process.cwd(), "dist");
+  app.use(import_express.default.static(distPath));
+  app.get("*", (req, res) => {
+    res.sendFile(import_path.default.join(distPath, "index.html"));
+  });
+}
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`GitVisualizer server running on http://0.0.0.0:${PORT}`);
+  });
+}
 module.exports = app;
