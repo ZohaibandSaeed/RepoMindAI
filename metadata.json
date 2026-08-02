@@ -1,0 +1,6 @@
+{
+  "name": "GitVisualizer",
+  "description": "Interactive high-level architecture diagram and deep file dependency graph visualizer for public GitHub repositories powered by Gemini AI",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

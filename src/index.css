@@ -1,0 +1,100 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    background-color: #E4E3E0;
+    color: #141414;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+}
+
+/* Custom Scrollbars */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #E4E3E0;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #141414;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #333333;
+}
+
+/* React Flow Custom Overrides for Technical Grid Theme */
+.react-flow__controls-button {
+  background-color: #ffffff !important;
+  border-color: #141414 !important;
+  color: #141414 !important;
+  fill: #141414 !important;
+  font-weight: bold;
+}
+
+.react-flow__controls-button:hover {
+  background-color: #141414 !important;
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+
+.react-flow__edge-path {
+  stroke: #141414 !important;
+  stroke-width: 1.5;
+  stroke-dasharray: 4 2;
+}
+
+.react-flow__node {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+/* Print Styles for Fallback PDF Export */
+@media print {
+  @page {
+    margin: 0; /* Removes browser headers and footers */
+  }
+  
+  body {
+    background-color: white !important;
+    padding: 1.5cm !important; /* Re-add margin for content */
+  }
+
+  /* Hide app UI elements not needed for print */
+  nav, main, footer, .react-flow {
+    display: none !important;
+  }
+
+  /* Reset fixed modal containers to flow normally so they can paginate */
+  .fixed, .absolute {
+    position: relative !important;
+    background: none !important;
+    transform: none !important;
+  }
+
+  /* Allow containers to expand fully without scrollbars */
+  .max-h-[90vh], .max-h-screen, .overflow-y-auto, .overflow-hidden, .max-w-4xl, .w-full {
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    max-width: none !important;
+    width: auto !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Specific tweaks for printable content */
+  .printable-content {
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}
