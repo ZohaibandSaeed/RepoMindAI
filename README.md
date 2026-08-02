@@ -1,6 +1,6 @@
 <div align="center">
   <img width="120" height="120" src="./public/logo.png" alt="RepoMind AI Logo" />
-  <h1>RepoMind AI 🧠</h1>
+  <h1>RepoMind AI </h1>
   <p><strong>Visualize Code Like Never Before</strong></p>
 </div>
 
@@ -10,14 +10,14 @@
 
 ## ✨ Features
 
-- **🌐 Interactive Architecture Map:** Automatically generates a high-level visual structure of any codebase.
-- **🔥 Heatmap Tracking:** Visualizes the most active parts of the repository based on commit history.
-- **🛡️ Security Audits:** Get a complete AI-driven security audit and deployment score for the repository.
-- **🧪 Auto-Generate Test Cases:** Select any file node and instantly generate comprehensive unit tests using AI.
-- **🛠️ AI Code Refactoring:** Use the Refactoring Agent to analyze complex code, identify issues, and receive optimized, updated code in a clean diff.
-- **💬 Repo Chat:** Chat directly with your repository's context. Ask the AI questions about the architecture or specific logic flows.
+- ** Interactive Architecture Map:** Automatically generates a high-level visual structure of any codebase.
+- ** Heatmap Tracking:** Visualizes the most active parts of the repository based on commit history.
+- ** Security Audits:** Get a complete AI-driven security audit and deployment score for the repository.
+- ** Auto-Generate Test Cases:** Select any file node and instantly generate comprehensive unit tests using AI.
+- ** AI Code Refactoring:** Use the Refactoring Agent to analyze complex code, identify issues, and receive optimized, updated code in a clean diff.
+- ** Repo Chat:** Chat directly with your repository's context. Ask the AI questions about the architecture or specific logic flows.
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### Prerequisites
 Make sure you have [Node.js](https://nodejs.org/) installed on your machine.
@@ -43,7 +43,7 @@ Make sure you have [Node.js](https://nodejs.org/) installed on your machine.
 
 4. Open your browser and navigate to `http://localhost:3000`.
 
-## ⚙️ Configuration
+##  Configuration
 
 Through the in-app **Keys** menu, you can set:
 - **Gemini API Key:** Required for all AI-powered features (Chat, Refactoring, Tests, Security Audit).

@@ -7,11 +7,10 @@ import { generateRepoGraphsWithAI, explainNodeWithAI } from './src/services/gemi
 
 dotenv.config();
 
-async function startServer() {
-  const app = express();
-  const PORT = 3000;
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-  app.use(express.json());
+app.use(express.json());
 
   // API Routes
   app.get('/api/health', (req, res) => {
@@ -302,11 +301,12 @@ async function startServer() {
 
   // Vite Middleware in Development mode
   if (process.env.NODE_ENV !== 'production') {
-    const vite = await createViteServer({
+    createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
+    }).then((vite) => {
+      app.use(vite.middlewares);
     });
-    app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
@@ -315,11 +315,10 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`GitVisualizer server running on http://0.0.0.0:${PORT}`);
-  });
-}
+  if (!process.env.VERCEL) {
+    app.listen(PORT, () => {
+      console.log(`GitVisualizer server running on http://0.0.0.0:${PORT}`);
+    });
+  }
 
-startServer().catch((err) => {
-  console.error('Failed to start GitVisualizer server:', err);
-});
+export default app;
