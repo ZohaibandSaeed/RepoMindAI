@@ -75,4 +75,4 @@ app.post('/api/generate-tests', async (req, res) => {
   }
 });
 
-export default app;
+module.exports = app;
